@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { MicOff, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const VideoTile = ({ participant }) => {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (videoRef.current && participant.stream) {
+      videoRef.current.srcObject = participant.stream;
+    }
+  }, [participant.stream]);
   return (
     <motion.div 
       className={`video-tile ${participant.speaking ? 'speaking' : ''}`}
@@ -19,11 +26,11 @@ const VideoTile = ({ participant }) => {
         </div>
       ) : (
         <video 
+          ref={videoRef}
           className="video-stream"
           autoPlay 
           playsInline 
           muted={participant.isLocal}
-          // srcObject would be attached here via a ref in a real WebRTC implementation
         />
       )}
 
