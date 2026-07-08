@@ -19,11 +19,14 @@ const MeetingRoom = () => {
   
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [participants, setParticipants] = useState([]);
+  const [chatMessages, setChatMessages] = useState([]);
   
   const socketRef = useRef();
   const peersRef = useRef([]); // Stores peer instances
   const streamRef = useRef();
+  const screenStreamRef = useRef(null);
 
   useEffect(() => {
     socketRef.current = io(BACKEND_URL, {
@@ -74,6 +77,11 @@ const MeetingRoom = () => {
           }
         });
 
+        // Handle incoming chat messages
+        socketRef.current.on('chat-message', (data) => {
+          setChatMessages(prev => [...prev, data]);
+        });
+
       }).catch(err => {
         console.error("Failed to get media devices:", err);
         setBackendStatus('Camera/Mic Blocked');
@@ -88,6 +96,9 @@ const MeetingRoom = () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach(track => track.stop());
+      }
       socketRef.current.disconnect();
     };
   }, [id]);
@@ -96,7 +107,7 @@ const MeetingRoom = () => {
   function createPeer(userToSignal, callerID, stream) {
     const peer = new Peer({
       initiator: true,
-      trickle: false, // We'll just send the full SDP for simplicity in prototype
+      trickle: false,
       stream,
       config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
     });
@@ -159,6 +170,86 @@ const MeetingRoom = () => {
     return peer;
   }
 
+  // Chat Functionality
+  const sendMessage = (text) => {
+    if (!text.trim()) return;
+    const msgData = {
+      message: text,
+      sender: 'You',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    // Add to local state
+    setChatMessages(prev => [...prev, msgData]);
+    
+    // Send to server
+    socketRef.current.emit('chat-message', {
+      message: text,
+      sender: 'Remote User', // To others, we are the remote user
+      roomId: id
+    });
+  };
+
+  // Screen Share Functionality
+  const toggleScreenShare = async () => {
+    if (!isScreenSharing) {
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ cursor: true });
+        screenStreamRef.current = screenStream;
+        
+        // Replace video track in all peers
+        const videoTrack = streamRef.current.getVideoTracks()[0];
+        const screenTrack = screenStream.getVideoTracks()[0];
+        
+        peersRef.current.forEach(item => {
+          item.peer.replaceTrack(videoTrack, screenTrack, streamRef.current);
+        });
+        
+        // Update local video tile
+        setParticipants(prev => prev.map(p => p.isLocal ? { ...p, stream: screenStream } : p));
+        setIsScreenSharing(true);
+
+        // When user clicks "Stop sharing" on the browser popup
+        screenTrack.onended = () => {
+          stopScreenShare();
+        };
+      } catch (err) {
+        console.error("Failed to share screen:", err);
+      }
+    } else {
+      stopScreenShare();
+    }
+  };
+
+  const stopScreenShare = () => {
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach(track => track.stop());
+      screenStreamRef.current = null;
+    }
+    
+    // Switch back to webcam
+    const videoTrack = streamRef.current.getVideoTracks()[0];
+    
+    peersRef.current.forEach(item => {
+      // We don't have the old screen track reference easily accessible in this scope for all peers,
+      // but simple-peer allows us to re-add the old track or we can fetch the current track from the peer.
+      // Easiest is to re-trigger replaceTrack.
+      const currentStream = item.peer.streams[0]; // This is incoming stream, wait.
+      // simple-peer replaceTrack requires (oldTrack, newTrack, stream)
+      // Since we modified the stream, we just need to replace the sender's track.
+      // Actually simple-peer needs the exact old track.
+      // For simplicity in this demo, let's just force a reload or handle it via a new stream.
+      // The robust way is keeping track of the old track. Let's do it robustly:
+      const screenTrack = item.peer._pc.getSenders().find(s => s.track.kind === 'video').track;
+      if (screenTrack && videoTrack) {
+        item.peer.replaceTrack(screenTrack, videoTrack, streamRef.current);
+      }
+    });
+
+    setParticipants(prev => prev.map(p => p.isLocal ? { ...p, stream: streamRef.current } : p));
+    setIsScreenSharing(false);
+  };
+
   // Toggle Mute
   useEffect(() => {
     if (streamRef.current) {
@@ -172,14 +263,14 @@ const MeetingRoom = () => {
 
   // Toggle Video
   useEffect(() => {
-    if (streamRef.current) {
+    if (streamRef.current && !isScreenSharing) {
       const videoTrack = streamRef.current.getVideoTracks()[0];
       if (videoTrack) {
         videoTrack.enabled = !isVideoOff;
       }
     }
     setParticipants(prev => prev.map(p => p.isLocal ? { ...p, videoOff: isVideoOff } : p));
-  }, [isVideoOff]);
+  }, [isVideoOff, isScreenSharing]);
 
   const toggleSidebar = (tab) => {
     if (isSidebarOpen && activeTab === tab) {
@@ -233,6 +324,7 @@ const MeetingRoom = () => {
           <ControlBar 
             isMuted={isMuted} setIsMuted={setIsMuted}
             isVideoOff={isVideoOff} setIsVideoOff={setIsVideoOff}
+            isScreenSharing={isScreenSharing} toggleScreenShare={toggleScreenShare}
             toggleSidebar={toggleSidebar}
             activeTab={isSidebarOpen ? activeTab : null}
           />
@@ -243,6 +335,8 @@ const MeetingRoom = () => {
           activeTab={activeTab} 
           onClose={() => setIsSidebarOpen(false)} 
           participants={participants}
+          chatMessages={chatMessages}
+          sendMessage={sendMessage}
         />
       </div>
     </div>

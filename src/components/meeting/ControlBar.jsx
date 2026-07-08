@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff, MessageSquare, Users, Settings, Sparkles } from 'lucide-react';
 
-const ControlBar = ({ isMuted, setIsMuted, isVideoOff, setIsVideoOff, toggleSidebar, activeTab }) => {
+const ControlBar = ({ isMuted, setIsMuted, isVideoOff, setIsVideoOff, isScreenSharing, toggleScreenShare, toggleSidebar, activeTab }) => {
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -33,7 +33,10 @@ const ControlBar = ({ isMuted, setIsMuted, isVideoOff, setIsVideoOff, toggleSide
             {isVideoOff ? <VideoOff /> : <Video />}
           </button>
           
-          <button className="control-btn">
+          <button 
+            className={`control-btn ${isScreenSharing ? 'active' : ''}`}
+            onClick={toggleScreenShare}
+          >
             <MonitorUp />
           </button>
 
@@ -62,7 +65,10 @@ const ControlBar = ({ isMuted, setIsMuted, isVideoOff, setIsVideoOff, toggleSide
             <Users size={20} />
           </button>
           
-          <button className="control-btn side-toggle">
+          <button 
+            className={`control-btn side-toggle ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => toggleSidebar('settings')}
+          >
             <Settings size={20} />
           </button>
         </div>

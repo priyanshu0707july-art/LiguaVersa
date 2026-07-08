@@ -1,8 +1,40 @@
-import React from 'react';
-import { X, Send, UserMinus } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Send, UserMinus, ToggleLeft, ToggleRight, Mic, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Sidebar = ({ isOpen, activeTab, onClose, participants }) => {
+const Sidebar = ({ isOpen, activeTab, onClose, participants, chatMessages = [], sendMessage }) => {
+  const [chatInput, setChatInput] = useState('');
+  const messagesEndRef = useRef(null);
+  
+  // Settings State Placeholders
+  const [noiseCancellation, setNoiseCancellation] = useState(true);
+  const [autoTranslate, setAutoTranslate] = useState(true);
+
+  const handleSend = () => {
+    if (chatInput.trim()) {
+      sendMessage(chatInput);
+      setChatInput('');
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSend();
+    }
+  };
+
+  // Auto-scroll chat
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const getTitle = () => {
+    if (activeTab === 'chat') return 'In-call Messages';
+    if (activeTab === 'participants') return 'Participants';
+    if (activeTab === 'settings') return 'Settings';
+    return '';
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -14,7 +46,7 @@ const Sidebar = ({ isOpen, activeTab, onClose, participants }) => {
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
           <div className="sidebar-header">
-            <h3>{activeTab === 'chat' ? 'In-call Messages' : 'Participants'}</h3>
+            <h3>{getTitle()}</h3>
             <button className="close-btn" onClick={onClose}><X size={20} /></button>
           </div>
 
@@ -22,20 +54,31 @@ const Sidebar = ({ isOpen, activeTab, onClose, participants }) => {
             {activeTab === 'chat' && (
               <div className="chat-container">
                 <div className="messages-area">
-                  <div className="message received">
-                    <span className="sender">Alex Johnson</span>
-                    <p>Can everyone hear the translated audio clearly?</p>
-                    <span className="time">10:02 AM</span>
-                  </div>
-                  <div className="message sent">
-                    <span className="sender">You</span>
-                    <p>Yes, the Japanese translation is incredibly fast!</p>
-                    <span className="time">10:03 AM</span>
-                  </div>
+                  {chatMessages.length === 0 ? (
+                    <div style={{ textAlign: 'center', marginTop: '50px', color: '#888', fontSize: '0.9rem' }}>
+                      No messages yet.<br/>Say hello!
+                    </div>
+                  ) : (
+                    chatMessages.map((msg, idx) => (
+                      <div key={idx} className={`message ${msg.sender === 'You' ? 'sent' : 'received'}`}>
+                        <span className="sender">{msg.sender}</span>
+                        <p>{msg.message}</p>
+                        <span className="time">{msg.timestamp}</span>
+                      </div>
+                    ))
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
                 <div className="chat-input-area">
-                  <input type="text" placeholder="Send a message..." className="glass-input" />
-                  <button className="send-btn"><Send size={18} /></button>
+                  <input 
+                    type="text" 
+                    placeholder="Send a message..." 
+                    className="glass-input" 
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                  />
+                  <button className="send-btn" onClick={handleSend}><Send size={18} /></button>
                 </div>
               </div>
             )}
@@ -58,6 +101,38 @@ const Sidebar = ({ isOpen, activeTab, onClose, participants }) => {
                   ))}
                 </div>
                 <button className="btn-secondary mute-all-btn">Mute All</button>
+              </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <div className="settings-container">
+                <div className="settings-list">
+                  <div className="setting-item">
+                    <div className="setting-info">
+                      <Mic size={18} className="text-primary" />
+                      <div>
+                        <h4>AI Noise Cancellation</h4>
+                        <p>Filter out background noise automatically.</p>
+                      </div>
+                    </div>
+                    <button className="toggle-btn" onClick={() => setNoiseCancellation(!noiseCancellation)}>
+                      {noiseCancellation ? <ToggleRight size={28} color="#00FFA3" /> : <ToggleLeft size={28} color="#888" />}
+                    </button>
+                  </div>
+
+                  <div className="setting-item">
+                    <div className="setting-info">
+                      <Globe size={18} className="text-primary" />
+                      <div>
+                        <h4>Auto-Translate Captions</h4>
+                        <p>Instantly translate incoming audio.</p>
+                      </div>
+                    </div>
+                    <button className="toggle-btn" onClick={() => setAutoTranslate(!autoTranslate)}>
+                      {autoTranslate ? <ToggleRight size={28} color="#00FFA3" /> : <ToggleLeft size={28} color="#888" />}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
