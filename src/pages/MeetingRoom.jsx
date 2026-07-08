@@ -202,7 +202,26 @@ const MeetingRoom = () => {
       <div className="meeting-main">
         <div className={`main-stage ${isSidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="room-header glass">
-            <h2>Meeting: {id}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <h2>Meeting: {id}</h2>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert("Meeting Link Copied! Send it to a friend to join the call.");
+                }}
+                style={{
+                  background: 'rgba(110, 86, 255, 0.2)',
+                  border: '1px solid #6E56FF',
+                  color: 'white',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem'
+                }}
+              >
+                Copy Invite Link
+              </button>
+            </div>
             <div className="meeting-badges">
               <span className="badge">HD 4K</span>
               <span className="badge green">Encrypted</span>
