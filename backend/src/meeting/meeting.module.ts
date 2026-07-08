@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MeetingGateway } from './meeting.gateway';
+import { MeetingController } from './meeting.controller';
+import { MeetingService } from './meeting.service';
 
 @Module({
-  providers: [MeetingGateway],
+  controllers: [MeetingController],
+  providers: [MeetingGateway, MeetingService],
 })
 export class MeetingModule {}
