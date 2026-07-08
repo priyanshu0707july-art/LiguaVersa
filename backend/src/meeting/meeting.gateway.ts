@@ -35,4 +35,14 @@ export class MeetingGateway {
       callerId: data.callerId
     });
   }
+
+  @SubscribeMessage('chat-message')
+  handleChatMessage(@MessageBody() data: { message: string, sender: string, roomId: string }, @ConnectedSocket() client: Socket) {
+    // Broadcast chat message to everyone in the room except the sender
+    client.to(data.roomId).emit('chat-message', {
+      message: data.message,
+      sender: data.sender,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+  }
 }
