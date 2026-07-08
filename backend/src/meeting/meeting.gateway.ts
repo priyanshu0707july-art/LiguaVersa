@@ -13,17 +13,26 @@ export class MeetingGateway {
   }
 
   @SubscribeMessage('offer')
-  handleOffer(@MessageBody() data: { offer: any, roomId: string }, @ConnectedSocket() client: Socket) {
-    client.to(data.roomId).emit('offer', data.offer);
+  handleOffer(@MessageBody() data: { offer: any, targetUserId: string, callerId: string, roomId: string }, @ConnectedSocket() client: Socket) {
+    client.to(data.targetUserId).emit('offer', {
+      offer: data.offer,
+      callerId: data.callerId
+    });
   }
 
   @SubscribeMessage('answer')
-  handleAnswer(@MessageBody() data: { answer: any, roomId: string }, @ConnectedSocket() client: Socket) {
-    client.to(data.roomId).emit('answer', data.answer);
+  handleAnswer(@MessageBody() data: { answer: any, targetUserId: string, callerId: string, roomId: string }, @ConnectedSocket() client: Socket) {
+    client.to(data.targetUserId).emit('answer', {
+      answer: data.answer,
+      callerId: data.callerId
+    });
   }
 
   @SubscribeMessage('ice-candidate')
-  handleIceCandidate(@MessageBody() data: { candidate: any, roomId: string }, @ConnectedSocket() client: Socket) {
-    client.to(data.roomId).emit('ice-candidate', data.candidate);
+  handleIceCandidate(@MessageBody() data: { candidate: any, targetUserId: string, callerId: string, roomId: string }, @ConnectedSocket() client: Socket) {
+    client.to(data.targetUserId).emit('ice-candidate', {
+      candidate: data.candidate,
+      callerId: data.callerId
+    });
   }
 }
