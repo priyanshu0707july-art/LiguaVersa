@@ -16,9 +16,15 @@ const Dashboard = () => {
 
   const handleJoinMeeting = (e) => {
     e.preventDefault();
-    if (joinCode.trim()) {
-      navigate(`/meet/${joinCode}`);
+    let code = joinCode.trim();
+    if (!code) return;
+    
+    // If they paste a full URL, extract just the ID at the end
+    if (code.includes('/meet/')) {
+      code = code.split('/meet/').pop();
     }
+    
+    navigate(`/meet/${code}`);
   };
 
   return (
