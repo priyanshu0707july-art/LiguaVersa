@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import MeetingCreatedModal from '../components/MeetingCreatedModal';
 import IncomingCallModal from '../components/IncomingCallModal';
 import ContactsTab from '../components/ContactsTab';
+import HistoryTab from '../components/HistoryTab';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -244,6 +245,8 @@ const Dashboard = () => {
           </>
           ) : activeTab === 'contacts' ? (
             <ContactsTab currentUserId={currentUserId} onCallContact={handleCallContact} />
+          ) : activeTab === 'history' ? (
+            <HistoryTab />
           ) : (
             <div className="coming-soon">
               <h2>Coming Soon</h2>

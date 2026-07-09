@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import Peer from 'simple-peer';
 import { Buffer } from 'buffer';
 globalThis.Buffer = Buffer; // Polyfill for simple-peer
 
+import { useAuth } from '../context/AuthContext';
 import VideoGrid from '../components/meeting/VideoGrid';
 import ControlBar from '../components/meeting/ControlBar';
 import Sidebar from '../components/meeting/Sidebar';
@@ -13,6 +14,8 @@ import '../components/meeting/Meeting.css';
 
 const MeetingRoom = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { token } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('chat');
   const [backendStatus, setBackendStatus] = useState('Connecting...');
@@ -31,6 +34,7 @@ const MeetingRoom = () => {
   const peersRef = useRef([]); // Stores peer instances
   const streamRef = useRef();
   const screenStreamRef = useRef(null);
+  const startTime = useRef(Date.now());
 
   useEffect(() => {
     socketRef.current = io(BACKEND_URL, {
@@ -333,6 +337,25 @@ const MeetingRoom = () => {
     }
   };
 
+  const handleLeave = async () => {
+    const duration = Math.floor((Date.now() - startTime.current) / 1000);
+    
+    try {
+      await fetch(`${BACKEND_URL}/history/end`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ meetingCode: id, duration })
+      });
+    } catch (e) {
+      console.error('Failed to save history', e);
+    }
+    
+    navigate(`/summary/${id}`);
+  };
+
   return (
     <div className="meeting-container">
       <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 100, background: 'rgba(0,0,0,0.5)', padding: '8px 12px', borderRadius: '12px', color: backendStatus === 'Connected to Backend' ? '#00FFA3' : '#FF4444', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -407,6 +430,7 @@ const MeetingRoom = () => {
             isScreenSharing={isScreenSharing} toggleScreenShare={toggleScreenShare}
             toggleSidebar={toggleSidebar}
             activeTab={isSidebarOpen ? activeTab : null}
+            onLeave={handleLeave}
           />
         </div>
 
