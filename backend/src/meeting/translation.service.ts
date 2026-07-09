@@ -12,7 +12,7 @@ export class TranslationService {
       'goodbye': '¡Adiós!',
       'yes': 'Sí.',
       'no': 'No.',
-      'let\\'s start the meeting': 'Comencemos la reunión.'
+      "let's start the meeting": 'Comencemos la reunión.'
     };
 
     const lower = text.toLowerCase().trim();
