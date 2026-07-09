@@ -15,23 +15,12 @@ export class MeetingService {
     return `LVA-${randomStr(4)}-${randomStr(4)}`;
   }
 
-  async createMeeting(data: { title: string; description?: string }) {
-    // For now, since auth is not fully wired, get or create a dummy user
-    let user = await this.prisma.user.findFirst({ where: { email: 'demo@linguaverse.com' } });
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          email: 'demo@linguaverse.com',
-          profile: { create: { firstName: 'Demo', lastName: 'User' } }
-        }
-      });
-    }
-
+  async createMeeting(data: { title: string; description?: string; hostId: string }) {
     const meetingCode = this.generateMeetingCode();
     
     const meeting = await this.prisma.meeting.create({
       data: {
-        hostId: user.id,
+        hostId: data.hostId,
         title: data.title || 'New Meeting',
         description: data.description,
         meetingCode: meetingCode,
@@ -53,14 +42,13 @@ export class MeetingService {
     return { valid: true, meetingId: meeting.id, title: meeting.title };
   }
 
-  async inviteUser(meetingCode: string, email: string) {
+  async inviteUser(meetingCode: string, receiverId: string) {
     const meeting = await this.prisma.meeting.findUnique({ where: { meetingCode } });
     if (!meeting) throw new NotFoundException('Meeting not found.');
 
-    const receiver = await this.prisma.user.findUnique({ where: { email } });
+    const receiver = await this.prisma.user.findUnique({ where: { id: receiverId } });
     if (!receiver) {
-      // In a real app we might send a cold email. For this prototype, we'll throw error if user doesn't exist
-      throw new BadRequestException('User with this email is not registered.');
+      throw new BadRequestException('User with this ID is not registered.');
     }
 
     const invitation = await this.prisma.meetingInvitation.create({

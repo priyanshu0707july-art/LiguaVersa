@@ -2,16 +2,51 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { BACKEND_URL } from '../config';
 import './Auth.css';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mocking auth success -> route to dashboard
-    navigate('/dashboard');
+    setError('');
+    setLoading(true);
+    
+    try {
+      const endpoint = isLogin ? '/auth/login' : '/auth/register';
+      const body = isLogin 
+        ? { email, password }
+        : { email, password, firstName: name };
+
+      const res = await fetch(`${BACKEND_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Authentication failed');
+      }
+
+      login(data.access_token);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -32,20 +67,22 @@ const Auth = () => {
         <form onSubmit={handleSubmit} className="auth-form">
           {!isLogin && (
             <div className="input-group">
-              <input type="text" placeholder="Full Name" required />
+              <input type="text" placeholder="First Name" value={name} onChange={e => setName(e.target.value)} required />
             </div>
           )}
           <div className="input-group">
             <Mail size={18} className="input-icon" />
-            <input type="email" placeholder="Email Address" required />
+            <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
           <div className="input-group">
             <Lock size={18} className="input-icon" />
-            <input type="password" placeholder="Password" required />
+            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
 
-          <button type="submit" className="btn-primary auth-submit">
-            {isLogin ? 'Log In' : 'Sign Up'} <ArrowRight size={18} />
+          {error && <div style={{ color: '#ff4444', fontSize: '0.8rem', marginTop: '8px' }}>{error}</div>}
+
+          <button type="submit" className="btn-primary auth-submit" disabled={loading}>
+            {loading ? 'Processing...' : isLogin ? 'Log In' : 'Sign Up'} <ArrowRight size={18} />
           </button>
         </form>
 

@@ -1,13 +1,15 @@
-import { Controller, Post, Get, Param, Body } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { MeetingService } from './meeting.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('meetings')
+@UseGuards(JwtAuthGuard)
 export class MeetingController {
   constructor(private readonly meetingService: MeetingService) {}
 
   @Post('create')
-  async createMeeting(@Body() data: { title: string; description?: string }) {
-    return this.meetingService.createMeeting(data);
+  async createMeeting(@Request() req, @Body() data: { title: string; description?: string }) {
+    return this.meetingService.createMeeting({ ...data, hostId: req.user.id });
   }
 
   @Get('validate/:code')
@@ -16,7 +18,7 @@ export class MeetingController {
   }
 
   @Post('invite')
-  async inviteUser(@Body() data: { meetingCode: string; email: string }) {
-    return this.meetingService.inviteUser(data.meetingCode, data.email);
+  async inviteUser(@Body() data: { meetingCode: string; receiverId: string }) {
+    return this.meetingService.inviteUser(data.meetingCode, data.receiverId);
   }
 }

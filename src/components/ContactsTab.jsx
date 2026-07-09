@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, UserPlus, Phone, Trash2, ShieldAlert } from 'lucide-react';
+import { Phone, Trash2, ShieldAlert, UserPlus, Search } from 'lucide-react';
 import { BACKEND_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
 import './ContactsTab.css';
 
 const ContactsTab = ({ currentUserId, onCallContact }) => {
+  const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -15,7 +17,7 @@ const ContactsTab = ({ currentUserId, onCallContact }) => {
     try {
       setIsLoading(true);
       const res = await fetch(`${BACKEND_URL}/contacts`, {
-        headers: { 'x-user-id': currentUserId }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
@@ -38,7 +40,9 @@ const ContactsTab = ({ currentUserId, onCallContact }) => {
     
     try {
       setIsSearching(true);
-      const res = await fetch(`${BACKEND_URL}/users/search?q=${searchQuery}`);
+      const res = await fetch(`${BACKEND_URL}/users/search?q=${searchQuery}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await res.json();
       if (data.success) {
         setSearchResults(data.results.filter(u => u.id !== currentUserId));
@@ -56,7 +60,7 @@ const ContactsTab = ({ currentUserId, onCallContact }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': currentUserId
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ contactId })
       });
@@ -76,7 +80,7 @@ const ContactsTab = ({ currentUserId, onCallContact }) => {
     try {
       const res = await fetch(`${BACKEND_URL}/contacts/${id}`, {
         method: 'DELETE',
-        headers: { 'x-user-id': currentUserId }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) fetchContacts();
     } catch (e) {
