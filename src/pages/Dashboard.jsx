@@ -9,6 +9,7 @@ import MeetingCreatedModal from '../components/MeetingCreatedModal';
 import IncomingCallModal from '../components/IncomingCallModal';
 import ContactsTab from '../components/ContactsTab';
 import HistoryTab from '../components/HistoryTab';
+import SettingsTab from '../components/SettingsTab';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -187,8 +188,8 @@ const Dashboard = () => {
             <>
               <div className="dash-hero">
                 <div className="time-greeting">
-                  <h1>Good Morning, {user?.email?.split('@')[0] || 'User'}</h1>
-                  <p>Ready to connect with the world?</p>
+                  <h2>Welcome back, {user?.profile?.firstName || user?.email?.split('@')[0] || 'User'}!</h2>
+                <p>Ready for your next global meeting?</p>
                 </div>
               </div>
 
@@ -238,7 +239,7 @@ const Dashboard = () => {
                   <h4>Global Marketing Sync</h4>
                   <p>English ➔ Japanese | 4 Participants</p>
                 </div>
-                <button className="btn-secondary small">Start</button>
+                <button className="btn-secondary small" onClick={() => navigate('/meet/demo')}>Start</button>
               </div>
             </div>
           </div>
@@ -247,6 +248,8 @@ const Dashboard = () => {
             <ContactsTab currentUserId={currentUserId} onCallContact={handleCallContact} />
           ) : activeTab === 'history' ? (
             <HistoryTab />
+          ) : activeTab === 'settings' ? (
+            <SettingsTab />
           ) : (
             <div className="coming-soon">
               <h2>Coming Soon</h2>
