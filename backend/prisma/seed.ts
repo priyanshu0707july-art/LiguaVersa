@@ -32,6 +32,30 @@ async function main() {
   });
 
   // 3. Seed Organization & Team
+  const users = [
+    { email: 'demo@linguaverse.com', firstName: 'Priya', lastName: 'Demo', timezone: 'UTC' },
+    { email: 'sundar@linguaverse.com', firstName: 'Sundar', lastName: 'Pichai', timezone: 'PST' },
+    { email: 'sam@linguaverse.com', firstName: 'Sam', lastName: 'Altman', timezone: 'PST' },
+    { email: 'satya@linguaverse.com', firstName: 'Satya', lastName: 'Nadella', timezone: 'PST' },
+  ];
+
+  for (const u of users) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: {
+        email: u.email,
+        profile: {
+          create: {
+            firstName: u.firstName,
+            lastName: u.lastName,
+            timezone: u.timezone,
+          }
+        }
+      }
+    });
+  }
+
   const org = await prisma.organization.upsert({
     where: { domain: 'linguaverse.ai' },
     update: {},
