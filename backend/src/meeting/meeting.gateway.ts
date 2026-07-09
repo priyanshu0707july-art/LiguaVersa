@@ -1,8 +1,11 @@
 import { WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { TranslationService } from './translation.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class MeetingGateway {
+  constructor(private translationService: TranslationService) {}
+
   @WebSocketServer()
   server: Server;
 
@@ -37,12 +40,25 @@ export class MeetingGateway {
   }
 
   @SubscribeMessage('chat-message')
-  handleChatMessage(@MessageBody() data: { message: string, sender: string, roomId: string }, @ConnectedSocket() client: Socket) {
-    // Broadcast chat message to everyone in the room except the sender
+  async handleChatMessage(@MessageBody() data: { message: string, sender: string, roomId: string }, @ConnectedSocket() client: Socket) {
+    const translatedMsg = await this.translationService.translateText(data.message);
+    
     client.to(data.roomId).emit('chat-message', {
-      message: data.message,
+      message: translatedMsg,
+      originalMessage: data.message,
       sender: data.sender,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+  }
+
+  @SubscribeMessage('speech-transcription')
+  async handleSpeech(@MessageBody() data: { text: string, senderId: string, roomId: string }, @ConnectedSocket() client: Socket) {
+    const translatedText = await this.translationService.translateText(data.text);
+    
+    client.to(data.roomId).emit('translated-speech', {
+      senderId: data.senderId,
+      originalText: data.text,
+      translatedText: translatedText,
     });
   }
 }

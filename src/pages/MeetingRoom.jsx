@@ -23,6 +23,10 @@ const MeetingRoom = () => {
   const [participants, setParticipants] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
   
+  // Translation & Subtitles State
+  const [subtitle, setSubtitle] = useState(null);
+  const recognitionRef = useRef(null);
+  
   const socketRef = useRef();
   const peersRef = useRef([]); // Stores peer instances
   const streamRef = useRef();
@@ -82,6 +86,42 @@ const MeetingRoom = () => {
           setChatMessages(prev => [...prev, data]);
         });
 
+        // Handle incoming translated speech
+        socketRef.current.on('translated-speech', (data) => {
+          setSubtitle({
+            text: data.translatedText,
+            original: data.originalText,
+            senderId: data.senderId
+          });
+          
+          // Clear subtitle after 4 seconds
+          setTimeout(() => {
+            setSubtitle(null);
+          }, 4000);
+        });
+
+        // Initialize Speech Recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+          recognitionRef.current = new SpeechRecognition();
+          recognitionRef.current.continuous = true;
+          recognitionRef.current.interimResults = false;
+          
+          recognitionRef.current.onresult = (event) => {
+            const transcript = event.results[event.results.length - 1][0].transcript;
+            
+            // Send to backend for translation
+            socketRef.current.emit('speech-transcription', {
+              text: transcript,
+              senderId: socketRef.current.id,
+              roomId: id
+            });
+          };
+          
+          // Start recognition if mic is not muted
+          recognitionRef.current.start();
+        }
+
       }).catch(err => {
         console.error("Failed to get media devices:", err);
         setBackendStatus('Camera/Mic Blocked');
@@ -98,6 +138,9 @@ const MeetingRoom = () => {
       }
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
       }
       socketRef.current.disconnect();
     };
@@ -259,6 +302,15 @@ const MeetingRoom = () => {
       }
     }
     setParticipants(prev => prev.map(p => p.isLocal ? { ...p, muted: isMuted } : p));
+    
+    // Pause speech recognition if muted
+    if (recognitionRef.current) {
+      if (isMuted) {
+        recognitionRef.current.stop();
+      } else {
+        try { recognitionRef.current.start(); } catch (e) {}
+      }
+    }
   }, [isMuted]);
 
   // Toggle Video
@@ -320,6 +372,34 @@ const MeetingRoom = () => {
           </div>
 
           <VideoGrid participants={participants} />
+          
+          {/* Cinematic Subtitles Overlay */}
+          {subtitle && (
+            <div style={{
+              position: 'absolute',
+              bottom: '100px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(0, 0, 0, 0.7)',
+              backdropFilter: 'blur(10px)',
+              padding: '12px 24px',
+              borderRadius: '20px',
+              color: '#FFF',
+              textAlign: 'center',
+              zIndex: 50,
+              maxWidth: '80%',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+              animation: 'fadeInUp 0.3s ease-out'
+            }}>
+              <div style={{ fontSize: '1.2rem', fontWeight: '500', letterSpacing: '0.5px' }}>
+                {subtitle.text}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#A0A0A0', marginTop: '4px' }}>
+                {subtitle.original}
+              </div>
+            </div>
+          )}
           
           <ControlBar 
             isMuted={isMuted} setIsMuted={setIsMuted}

@@ -60,10 +60,25 @@ const Sidebar = ({ isOpen, activeTab, onClose, participants, chatMessages = [], 
                     </div>
                   ) : (
                     chatMessages.map((msg, idx) => (
-                      <div key={idx} className={`message ${msg.sender === 'You' ? 'sent' : 'received'}`}>
-                        <span className="sender">{msg.sender}</span>
-                        <p>{msg.message}</p>
-                        <span className="time">{msg.timestamp}</span>
+                      <div key={idx} className={`chat-message ${msg.sender === 'You' ? 'sent' : 'received'}`}>
+                        <div className="msg-header">
+                          <span className="msg-sender">{msg.sender}</span>
+                          <span className="msg-time">{msg.timestamp}</span>
+                        </div>
+                        <div className="msg-content">
+                          {msg.sender === 'You' ? (
+                            msg.message
+                          ) : (
+                            <>
+                              <span style={{ fontWeight: '500', color: '#FFF' }}>{msg.message}</span>
+                              {msg.originalMessage && (
+                                <div style={{ fontSize: '0.8rem', color: '#A0A0A0', marginTop: '4px' }}>
+                                  Original: {msg.originalMessage}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))
                   )}
