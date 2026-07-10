@@ -5,7 +5,7 @@ import { BACKEND_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import './ContactsTab.css';
 
-const ContactsTab = ({ currentUserId, onCallContact }) => {
+const ContactsTab = ({ currentUserId, onCallContact, onlineUsers }) => {
   const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -158,6 +158,7 @@ const ContactsTab = ({ currentUserId, onCallContact }) => {
               >
                 <div className="contact-avatar">
                   {contact.email[0].toUpperCase()}
+                  <div className={`status-dot ${onlineUsers?.has(contact.contactId) ? 'online' : 'offline'}`} title={onlineUsers?.has(contact.contactId) ? 'Online' : 'Offline'}></div>
                 </div>
                 <div className="contact-details">
                   <h4>{contact.email.split('@')[0]}</h4>

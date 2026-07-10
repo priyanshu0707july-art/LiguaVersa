@@ -1,13 +1,38 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, WebSocketServer } from '@nestjs/websockets';
+import { WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { TranslationService } from './translation.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
-export class MeetingGateway {
+export class MeetingGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private translationService: TranslationService) {}
 
   @WebSocketServer()
   server: Server;
+
+  private connectedUsers = new Map<string, string>(); // userId -> socketId
+
+  handleConnection(client: Socket) {
+    const userId = client.handshake.query.userId as string;
+    if (userId) {
+      this.connectedUsers.set(userId, client.id);
+      // Broadcast to everyone that this user is online
+      this.server.emit('user-online', { userId });
+    }
+  }
+
+  handleDisconnect(client: Socket) {
+    const userId = client.handshake.query.userId as string;
+    if (userId) {
+      this.connectedUsers.delete(userId);
+      this.server.emit('user-offline', { userId });
+    }
+  }
+
+  @SubscribeMessage('get-online-users')
+  handleGetOnlineUsers(@ConnectedSocket() client: Socket) {
+    const onlineUsers = Array.from(this.connectedUsers.keys());
+    client.emit('online-users-list', onlineUsers);
+  }
 
   @SubscribeMessage('join-room')
   handleJoinRoom(@MessageBody() data: { roomId: string }, @ConnectedSocket() client: Socket) {
