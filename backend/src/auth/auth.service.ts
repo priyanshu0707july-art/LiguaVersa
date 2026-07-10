@@ -60,4 +60,33 @@ export class AuthService {
       }
     };
   }
+
+  async validateOAuthLogin(profile: any) {
+    let user = await this.prisma.user.findUnique({ where: { email: profile.email } });
+    
+    if (!user) {
+      // Create new user from OAuth profile
+      user = await this.prisma.user.create({
+        data: {
+          email: profile.email,
+          // authProvider: 'google', // Assuming schema updates or generic field
+          // isEmailVerified: true,
+          profile: {
+            create: {
+              firstName: profile.firstName,
+              lastName: profile.lastName,
+              // avatarUrl: profile.picture
+            }
+          }
+        },
+        include: { profile: true }
+      });
+    }
+
+    // Generate JWT
+    const payload = { email: user.email, sub: user.id };
+    return {
+      access_token: this.jwtService.sign(payload)
+    };
+  }
 }

@@ -92,7 +92,7 @@ const Auth = () => {
 
         <div className="social-auth">
           <button className="social-btn glass">Github</button>
-          <button className="social-btn glass">Google</button>
+          <button className="social-btn glass" onClick={() => window.location.href = `${BACKEND_URL}/auth/google`}>Google</button>
           <button className="social-btn glass">Microsoft</button>
         </div>
 

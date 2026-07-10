@@ -7,6 +7,8 @@ import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import MeetingRoom from './pages/MeetingRoom';
 import MeetingSummary from './pages/MeetingSummary';
+import OAuthCallback from './pages/OAuthCallback';
+import ProtectedRoute from './components/ProtectedRoute';
 import Scene from './components/canvas/Scene';
 import Footer from './components/Footer';
 
@@ -28,6 +30,7 @@ function App() {
           </>
         } />
         <Route path="/auth" element={<><div id="canvas-container"><Scene /></div><div className="content-layer"><Auth /></div></>} />
+        <Route path="/auth/callback" element={<OAuthCallback />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/meet/:id" element={<MeetingRoom />} />
         <Route path="/summary/:id" element={<MeetingSummary />} />
