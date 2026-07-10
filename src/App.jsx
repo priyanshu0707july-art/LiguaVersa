@@ -8,7 +8,6 @@ import Dashboard from './pages/Dashboard';
 import MeetingRoom from './pages/MeetingRoom';
 import MeetingSummary from './pages/MeetingSummary';
 import OAuthCallback from './pages/OAuthCallback';
-import ProtectedRoute from './components/ProtectedRoute';
 import Scene from './components/canvas/Scene';
 import Footer from './components/Footer';
 
