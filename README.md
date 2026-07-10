@@ -1,41 +1,87 @@
-# LinguaVerse AI 🌐✨
+<div align="center">
+  <br />
+  <h1>🌐 LinguaVerse</h1>
+  <p>
+    <strong>A next-generation enterprise video conferencing platform powered by real-time AI Translation.</strong>
+  </p>
+  <br />
+</div>
 
-LinguaVerse AI is a next-generation, highly scalable real-time multilingual video communication platform. Inspired by the visual fidelity of Unreal Engine 5 and the architectural robustness of Google Meet, LinguaVerse shatters language barriers with sub-500ms AI translation pipelines.
+<p align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/WebRTC-333333?style=for-the-badge&logo=webrtc&logoColor=white" alt="WebRTC" />
+  <img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" alt="Google Cloud" />
+</p>
 
-## The 7-Step Architecture
+## ✨ Introduction
+LinguaVerse breaks down language barriers in professional environments. It is a fully-featured, desktop-class web application that allows users to hold 1-on-1 video meetings while an integrated AI translates speech in real-time. Built with modern, glassmorphic UI aesthetics and high-performance WebRTC connections.
 
-This repository contains the complete implementation of the 7-step master plan:
+## 🚀 Key Features
+- **Real-Time AI Translation:** Integrated with Google's Gemini AI to instantly translate chat and transcribe speech across different languages.
+- **High-Quality Video Calling:** Powered by WebRTC for ultra-low latency, peer-to-peer video and audio streaming.
+- **Enterprise Authentication:** Secure Google OAuth 2.0 integration and JWT-based authentication.
+- **Live Presence Tracking:** Real-time green dot indicators show you exactly when your contacts are online using WebSockets.
+- **Native OS Notifications:** Never miss a meeting with native Windows/macOS desktop push notifications for incoming calls.
+- **Meeting History & Summaries:** Automatically logs past meetings.
+- **Beautiful Glassmorphic UI:** A stunning, fully responsive dashboard built with modern CSS and Framer Motion animations.
 
-### 1. Futuristic UI/UX Design (Frontend)
-- **Aesthetic**: Dark futuristic theme, glassmorphism, soft neon gradients (`#6E56FF`, `#00E7FF`).
-- **Tech**: React, Vite, Framer Motion, Vanilla CSS.
-- **Features**: Highly responsive cinematic landing page with interactive layouts.
+## 🛠️ Technology Stack
+### Frontend (Client)
+- **Framework:** React.js (Vite)
+- **Styling:** Vanilla CSS (Glassmorphism design system)
+- **Animations:** Framer Motion
+- **Video/Audio:** WebRTC (`simple-peer`)
+- **Hosting:** Vercel
 
-### 2. Scalable Microservices Architecture (Backend)
-- **Architecture**: NestJS Monorepo.
-- **Microservices**: Scaffolded API Gateway, Auth Service, and a WebRTC Meeting Signaling Service.
-- **Infrastructure**: Dockerized PostgreSQL and Redis for high-speed pub/sub messaging across nodes.
+### Backend (Server)
+- **Framework:** NestJS
+- **Database:** PostgreSQL
+- **ORM:** Prisma
+- **Real-Time Engine:** Socket.io (WebSockets)
+- **Authentication:** Passport.js (Google Strategy), JWT
+- **AI Engine:** Google Generative AI (Gemini Flash)
+- **Hosting:** Render
 
-### 3. Comprehensive Database Design
-- **ORM**: Prisma configured for a massive 22-table schema.
-- **Features**: Complete relational mapping for Identity, Organizations, Subscriptions, AI Speech Histories, and Meetings. Includes UUIDs, Soft Delete patterns, and Audit columns.
+## ⚙️ Environment Variables
+To run this project locally, you will need the following environment variables.
 
-### 4. Real-time Multilingual Communication Engine
-- **Pipeline**: Audio stream WebSocket gateway connecting Speech-to-Text -> LLM Translation -> Text-to-Speech (Voice Cloning) -> Lip Sync Visemes.
-- **Latency**: Architected for sub-500ms streaming performance using Node `EventEmitter` patterns.
+### Backend (`/backend/.env`)
+```env
+DATABASE_URL="postgresql://user:password@host:port/db?schema=public"
+JWT_SECRET="your_jwt_secret"
+GEMINI_API_KEY="your_google_gemini_api_key"
+GOOGLE_CLIENT_ID="your_oauth_client_id"
+GOOGLE_CLIENT_SECRET="your_oauth_client_secret"
+FRONTEND_URL="http://localhost:5173"
+```
 
-### 5. Google Meet-Like Video System
-- **UI Grid**: Auto-calculating `Active Speaker` and `Gallery` views for dynamic participant scaling.
-- **Controls**: Premium glassmorphic host control bar and a collapsible sidebar housing Live Chat, Participant lists, and AI Notes.
+## 💻 Quick Start
 
-### 6. Unreal Engine 5 Inspired 3D Landing Page
-- **Tech**: React Three Fiber, Three.js, GSAP.
-- **Visuals**: Procedurally generated Holographic AI Brain, Earth, and Voice Particle systems.
-- **Cinematics**: GSAP ScrollTrigger camera fly-throughs, paired with `@react-three/postprocessing` (Bloom, Depth of Field, Vignette).
+### 1. Clone the repository
+```bash
+git clone https://github.com/priyanshu0707july-art/LiguaVersa.git
+cd LiguaVersa
+```
 
-### 7. Complete End-to-End User Flow
-- **Routing**: Connected as a full Single Page Application via `react-router-dom`.
-- **Journey**: Landing Page ➔ Authentication Gateway ➔ User Dashboard ➔ Video Meeting Room ➔ Post-Meeting AI Summary Page.
+### 2. Start the Backend
+```bash
+cd backend
+npm install
+npx prisma generate
+npx prisma db push
+npm run start:dev
+```
 
----
-*Built with ❤️ for the future of global communication.*
+### 3. Start the Frontend
+Open a new terminal window.
+```bash
+# From the project root
+npm install
+npm run dev
+```
+Visit `http://localhost:5173` in your browser.
+
+## 🤝 Contact
+Developed by Priyanshu. If you find this project interesting, feel free to star the repository!
