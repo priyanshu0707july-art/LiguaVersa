@@ -4,6 +4,9 @@
   <p>
     <strong>A next-generation enterprise video conferencing platform powered by real-time AI Translation.</strong>
   </p>
+  <p>
+    <a href="https://ligua-versa-uh2k.vercel.app/" target="_blank"><strong>✨ View Live Demo ✨</strong></a>
+  </p>
   <br />
 </div>
 
