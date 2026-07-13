@@ -12,6 +12,17 @@ import Sidebar from '../components/meeting/Sidebar';
 import { BACKEND_URL } from '../config';
 import '../components/meeting/Meeting.css';
 
+const LANGUAGES = [
+  { code: 'en-US', name: 'English' },
+  { code: 'es-ES', name: 'Spanish' },
+  { code: 'fr-FR', name: 'French' },
+  { code: 'de-DE', name: 'German' },
+  { code: 'zh-CN', name: 'Chinese' },
+  { code: 'ja-JP', name: 'Japanese' },
+  { code: 'hi-IN', name: 'Hindi' },
+  { code: 'mr-IN', name: 'Marathi' },
+];
+
 const MeetingRoom = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,6 +39,14 @@ const MeetingRoom = () => {
   
   // Translation & Subtitles State
   const [subtitle, setSubtitle] = useState(null);
+  const [sourceLang, setSourceLang] = useState('en-US');
+  const [targetLang, setTargetLang] = useState('mr-IN');
+  const sourceLangRef = useRef(sourceLang);
+  const targetLangRef = useRef(targetLang);
+  
+  useEffect(() => { sourceLangRef.current = sourceLang; }, [sourceLang]);
+  useEffect(() => { targetLangRef.current = targetLang; }, [targetLang]);
+
   const recognitionRef = useRef(null);
   
   const socketRef = useRef();
@@ -110,15 +129,21 @@ const MeetingRoom = () => {
           recognitionRef.current = new SpeechRecognition();
           recognitionRef.current.continuous = true;
           recognitionRef.current.interimResults = false;
+          recognitionRef.current.lang = sourceLangRef.current;
           
           recognitionRef.current.onresult = (event) => {
             const transcript = event.results[event.results.length - 1][0].transcript;
             
+            const sourceName = LANGUAGES.find(l => l.code === sourceLangRef.current)?.name || 'English';
+            const targetName = LANGUAGES.find(l => l.code === targetLangRef.current)?.name || 'English';
+
             // Send to backend for translation
             socketRef.current.emit('speech-transcription', {
               text: transcript,
               senderId: socketRef.current.id,
-              roomId: id
+              roomId: id,
+              sourceLang: sourceName,
+              targetLang: targetName
             });
           };
           
@@ -229,11 +254,16 @@ const MeetingRoom = () => {
     // Add to local state
     setChatMessages(prev => [...prev, msgData]);
     
+    const sourceName = LANGUAGES.find(l => l.code === sourceLangRef.current)?.name || 'English';
+    const targetName = LANGUAGES.find(l => l.code === targetLangRef.current)?.name || 'English';
+
     // Send to server
     socketRef.current.emit('chat-message', {
       message: text,
       sender: 'Remote User', // To others, we are the remote user
-      roomId: id
+      roomId: id,
+      sourceLang: sourceName,
+      targetLang: targetName
     });
   };
 
@@ -297,7 +327,7 @@ const MeetingRoom = () => {
     setIsScreenSharing(false);
   };
 
-  // Toggle Mute
+  // Toggle Mute & Language
   useEffect(() => {
     if (streamRef.current) {
       const audioTrack = streamRef.current.getAudioTracks()[0];
@@ -307,15 +337,15 @@ const MeetingRoom = () => {
     }
     setParticipants(prev => prev.map(p => p.isLocal ? { ...p, muted: isMuted } : p));
     
-    // Pause speech recognition if muted
+    // Manage speech recognition when muted or language changes
     if (recognitionRef.current) {
-      if (isMuted) {
-        recognitionRef.current.stop();
-      } else {
-        try { recognitionRef.current.start(); } catch (e) {}
+      recognitionRef.current.lang = sourceLang;
+      try { recognitionRef.current.stop(); } catch (e) {}
+      if (!isMuted) {
+        setTimeout(() => { try { recognitionRef.current.start(); } catch (e) {} }, 100);
       }
     }
-  }, [isMuted]);
+  }, [isMuted, sourceLang]);
 
   // Toggle Video
   useEffect(() => {
@@ -388,9 +418,22 @@ const MeetingRoom = () => {
                 Copy Invite Link
               </button>
             </div>
-            <div className="meeting-badges">
-              <span className="badge">HD 4K</span>
-              <span className="badge green">Encrypted</span>
+            <div className="meeting-badges" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <select 
+                value={sourceLang} 
+                onChange={e => setSourceLang(e.target.value)}
+                style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '6px', fontSize: '0.85rem' }}
+              >
+                {LANGUAGES.map(l => <option key={l.code} value={l.code} style={{color: 'black'}}>{l.name} (You)</option>)}
+              </select>
+              <span style={{color: '#aaa', fontSize: '0.8rem'}}>➔</span>
+              <select 
+                value={targetLang} 
+                onChange={e => setTargetLang(e.target.value)}
+                style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '6px', fontSize: '0.85rem' }}
+              >
+                {LANGUAGES.map(l => <option key={l.code} value={l.code} style={{color: 'black'}}>{l.name} (Them)</option>)}
+              </select>
             </div>
           </div>
 

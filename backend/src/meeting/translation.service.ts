@@ -1,27 +1,32 @@
 import { Injectable } from '@nestjs/common';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 @Injectable()
 export class TranslationService {
-  async translateText(text: string, targetLang: string = 'es'): Promise<string> {
-    const mockDictionary = {
-      'hello': '¡Hola!',
-      'good morning': '¡Buenos días!',
-      'how are you': '¿Cómo estás?',
-      'how are you doing': '¿Cómo estás?',
-      'thank you': '¡Gracias!',
-      'goodbye': '¡Adiós!',
-      'yes': 'Sí.',
-      'no': 'No.',
-      "let's start the meeting": 'Comencemos la reunión.'
-    };
+  private ai: GoogleGenerativeAI;
+  private model: any;
 
-    const lower = text.toLowerCase().trim();
-    // Simple exact match for demo
-    if (mockDictionary[lower]) {
-      return mockDictionary[lower];
+  constructor() {
+    const apiKey = process.env.GEMINI_API_KEY || '';
+    if (apiKey) {
+      this.ai = new GoogleGenerativeAI(apiKey);
+      this.model = this.ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    }
+  }
+
+  async translateText(text: string, sourceLang: string, targetLang: string): Promise<string> {
+    if (!this.model) {
+      console.warn("GEMINI_API_KEY is missing. Using fallback mock translation.");
+      return `[${targetLang.toUpperCase()}] ${text}`;
     }
 
-    // Default fallback mock
-    return `[ES] ${text}`;
+    try {
+      const prompt = `Translate the following text from ${sourceLang} to ${targetLang}. Only output the translated text and nothing else, without quotes.\n\nText: ${text}`;
+      const result = await this.model.generateContent(prompt);
+      return result.response.text().trim();
+    } catch (error) {
+      console.error("Gemini Translation Error:", error);
+      return `[Error: Translation Failed] ${text}`;
+    }
   }
 }

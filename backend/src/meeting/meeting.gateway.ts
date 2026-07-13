@@ -65,8 +65,8 @@ export class MeetingGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   @SubscribeMessage('chat-message')
-  async handleChatMessage(@MessageBody() data: { message: string, sender: string, roomId: string }, @ConnectedSocket() client: Socket) {
-    const translatedMsg = await this.translationService.translateText(data.message);
+  async handleChatMessage(@MessageBody() data: { message: string, sender: string, roomId: string, sourceLang: string, targetLang: string }, @ConnectedSocket() client: Socket) {
+    const translatedMsg = await this.translationService.translateText(data.message, data.sourceLang, data.targetLang);
     
     client.to(data.roomId).emit('chat-message', {
       message: translatedMsg,
@@ -77,8 +77,8 @@ export class MeetingGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   @SubscribeMessage('speech-transcription')
-  async handleSpeech(@MessageBody() data: { text: string, senderId: string, roomId: string }, @ConnectedSocket() client: Socket) {
-    const translatedText = await this.translationService.translateText(data.text);
+  async handleSpeech(@MessageBody() data: { text: string, senderId: string, roomId: string, sourceLang: string, targetLang: string }, @ConnectedSocket() client: Socket) {
+    const translatedText = await this.translationService.translateText(data.text, data.sourceLang, data.targetLang);
     
     client.to(data.roomId).emit('translated-speech', {
       senderId: data.senderId,
