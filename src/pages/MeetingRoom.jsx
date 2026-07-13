@@ -68,6 +68,10 @@ const MeetingRoom = () => {
       console.log('✅ Connected to Backend!', socketRef.current.id);
       setBackendStatus('Connected to Backend');
       
+      // Ensure backend knows our language immediately upon connection
+      const langName = LANGUAGES.find(l => l.code === sourceLangRef.current)?.name || 'English';
+      socketRef.current.emit('set-language', { lang: langName });
+      
       // Request Camera and Mic permissions
       navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
         streamRef.current = stream;
@@ -147,6 +151,13 @@ const MeetingRoom = () => {
               roomId: id,
               sourceLang: sourceName
             });
+          };
+
+          // Automatically restart recognition if it stops (common browser behavior)
+          recognitionRef.current.onend = () => {
+            if (!isMuted && recognitionRef.current) {
+              try { recognitionRef.current.start(); } catch (e) {}
+            }
           };
           
           // Start recognition if mic is not muted
