@@ -396,8 +396,8 @@ const MeetingRoom = () => {
       <div className="meeting-bg"></div>
 
       <div className="meeting-main">
-        <div className={`main-stage ${isSidebarOpen ? 'sidebar-open' : ''}`}>
-          <div className="room-header glass">
+        <div className={`meeting-grid-area ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+          <div className="meeting-header glass" style={{ width: '100%', justifyContent: 'space-between', zIndex: 100 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               <h2>Meeting: {id}</h2>
               <button 
