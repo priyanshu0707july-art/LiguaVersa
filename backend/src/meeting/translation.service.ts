@@ -10,7 +10,7 @@ export class TranslationService {
     const apiKey = process.env.GEMINI_API_KEY || '';
     if (apiKey) {
       this.ai = new GoogleGenerativeAI(apiKey);
-      this.model = this.ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      this.model = this.ai.getGenerativeModel({ model: 'gemini-3.5-flash' });
     }
   }
 

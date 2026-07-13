@@ -40,12 +40,16 @@ const MeetingRoom = () => {
   // Translation & Subtitles State
   const [subtitle, setSubtitle] = useState(null);
   const [sourceLang, setSourceLang] = useState('en-US');
-  const [targetLang, setTargetLang] = useState('mr-IN');
   const sourceLangRef = useRef(sourceLang);
-  const targetLangRef = useRef(targetLang);
   
   useEffect(() => { sourceLangRef.current = sourceLang; }, [sourceLang]);
-  useEffect(() => { targetLangRef.current = targetLang; }, [targetLang]);
+
+  useEffect(() => {
+    if (socketRef.current) {
+      const langName = LANGUAGES.find(l => l.code === sourceLang)?.name || 'English';
+      socketRef.current.emit('set-language', { lang: langName });
+    }
+  }, [sourceLang]);
 
   const recognitionRef = useRef(null);
   
@@ -135,15 +139,13 @@ const MeetingRoom = () => {
             const transcript = event.results[event.results.length - 1][0].transcript;
             
             const sourceName = LANGUAGES.find(l => l.code === sourceLangRef.current)?.name || 'English';
-            const targetName = LANGUAGES.find(l => l.code === targetLangRef.current)?.name || 'English';
 
             // Send to backend for translation
             socketRef.current.emit('speech-transcription', {
               text: transcript,
               senderId: socketRef.current.id,
               roomId: id,
-              sourceLang: sourceName,
-              targetLang: targetName
+              sourceLang: sourceName
             });
           };
           
@@ -255,15 +257,13 @@ const MeetingRoom = () => {
     setChatMessages(prev => [...prev, msgData]);
     
     const sourceName = LANGUAGES.find(l => l.code === sourceLangRef.current)?.name || 'English';
-    const targetName = LANGUAGES.find(l => l.code === targetLangRef.current)?.name || 'English';
 
     // Send to server
     socketRef.current.emit('chat-message', {
       message: text,
       sender: 'Remote User', // To others, we are the remote user
       roomId: id,
-      sourceLang: sourceName,
-      targetLang: targetName
+      sourceLang: sourceName
     });
   };
 
@@ -419,20 +419,13 @@ const MeetingRoom = () => {
               </button>
             </div>
             <div className="meeting-badges" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <span style={{color: 'white', fontSize: '0.85rem'}}>My Language:</span>
               <select 
                 value={sourceLang} 
                 onChange={e => setSourceLang(e.target.value)}
                 style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '6px', fontSize: '0.85rem' }}
               >
-                {LANGUAGES.map(l => <option key={l.code} value={l.code} style={{color: 'black'}}>{l.name} (You)</option>)}
-              </select>
-              <span style={{color: '#aaa', fontSize: '0.8rem'}}>➔</span>
-              <select 
-                value={targetLang} 
-                onChange={e => setTargetLang(e.target.value)}
-                style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '6px', fontSize: '0.85rem' }}
-              >
-                {LANGUAGES.map(l => <option key={l.code} value={l.code} style={{color: 'black'}}>{l.name} (Them)</option>)}
+                {LANGUAGES.map(l => <option key={l.code} value={l.code} style={{color: 'black'}}>{l.name}</option>)}
               </select>
             </div>
           </div>

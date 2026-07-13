@@ -10,6 +10,7 @@ export class MeetingGateway implements OnGatewayConnection, OnGatewayDisconnect 
   server: Server;
 
   private connectedUsers = new Map<string, string>(); // userId -> socketId
+  private socketLanguages = new Map<string, string>(); // socketId -> language name
 
   handleConnection(client: Socket) {
     const userId = client.handshake.query.userId as string;
@@ -26,6 +27,7 @@ export class MeetingGateway implements OnGatewayConnection, OnGatewayDisconnect 
       this.connectedUsers.delete(userId);
       this.server.emit('user-offline', { userId });
     }
+    this.socketLanguages.delete(client.id);
   }
 
   @SubscribeMessage('get-online-users')
@@ -64,26 +66,53 @@ export class MeetingGateway implements OnGatewayConnection, OnGatewayDisconnect 
     });
   }
 
+  @SubscribeMessage('set-language')
+  handleSetLanguage(@MessageBody() data: { lang: string }, @ConnectedSocket() client: Socket) {
+    this.socketLanguages.set(client.id, data.lang);
+  }
+
   @SubscribeMessage('chat-message')
-  async handleChatMessage(@MessageBody() data: { message: string, sender: string, roomId: string, sourceLang: string, targetLang: string }, @ConnectedSocket() client: Socket) {
-    const translatedMsg = await this.translationService.translateText(data.message, data.sourceLang, data.targetLang);
+  async handleChatMessage(@MessageBody() data: { message: string, sender: string, roomId: string, sourceLang: string }, @ConnectedSocket() client: Socket) {
+    const sockets = await this.server.in(data.roomId).fetchSockets();
     
-    client.to(data.roomId).emit('chat-message', {
-      message: translatedMsg,
-      originalMessage: data.message,
-      sender: data.sender,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    });
+    for (const socket of sockets) {
+      if (socket.id === client.id) continue;
+      
+      const targetLang = this.socketLanguages.get(socket.id) || 'English';
+      let translatedMsg = data.message;
+      
+      if (data.sourceLang !== targetLang) {
+        translatedMsg = await this.translationService.translateText(data.message, data.sourceLang, targetLang);
+      }
+      
+      this.server.to(socket.id).emit('chat-message', {
+        message: translatedMsg,
+        originalMessage: data.message,
+        sender: data.sender,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    }
   }
 
   @SubscribeMessage('speech-transcription')
-  async handleSpeech(@MessageBody() data: { text: string, senderId: string, roomId: string, sourceLang: string, targetLang: string }, @ConnectedSocket() client: Socket) {
-    const translatedText = await this.translationService.translateText(data.text, data.sourceLang, data.targetLang);
+  async handleSpeech(@MessageBody() data: { text: string, senderId: string, roomId: string, sourceLang: string }, @ConnectedSocket() client: Socket) {
+    const sockets = await this.server.in(data.roomId).fetchSockets();
     
-    client.to(data.roomId).emit('translated-speech', {
-      senderId: data.senderId,
-      originalText: data.text,
-      translatedText: translatedText,
-    });
+    for (const socket of sockets) {
+      if (socket.id === client.id) continue;
+      
+      const targetLang = this.socketLanguages.get(socket.id) || 'English';
+      let translatedText = data.text;
+      
+      if (data.sourceLang !== targetLang) {
+        translatedText = await this.translationService.translateText(data.text, data.sourceLang, targetLang);
+      }
+      
+      this.server.to(socket.id).emit('translated-speech', {
+        senderId: data.senderId,
+        originalText: data.text,
+        translatedText: translatedText,
+      });
+    }
   }
 }
